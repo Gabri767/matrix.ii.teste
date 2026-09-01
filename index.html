@@ -292,6 +292,29 @@
       color: var(--text-muted);
     }
 
+    .deploy-flow {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 0.85rem;
+      list-style: none;
+    }
+
+    .deploy-flow li {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--text-main);
+      font-size: 0.78rem;
+      font-weight: 700;
+    }
+
+    .deploy-flow li:not(:last-child)::after {
+      content: "→";
+      color: var(--accent-blue);
+      font-weight: 800;
+    }
+
     .doc-link {
       display: inline-flex;
       align-items: center;
@@ -396,6 +419,14 @@
       <div class="info-content">
         <h3>Repositório & Integração Contínua</h3>
         <p>Deploy automatizado via GitHub Actions & GitHub Pages para a suíte Matrix II.</p>
+        <ul class="deploy-flow" aria-label="Fluxo de deploy">
+          <li>Alteração</li>
+          <li>git add .</li>
+          <li>git commit</li>
+          <li>git push</li>
+          <li>GitHub Actions</li>
+          <li>GitHub Pages</li>
+        </ul>
       </div>
       <a href="https://github.com/Gabri767/matrix.ii.teste" target="_blank" rel="noopener noreferrer" class="doc-link">
         Ver Repositório ↗
