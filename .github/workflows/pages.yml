@@ -3,6 +3,10 @@ name: Controlled Pages deployment
 on:
   push:
     branches:
+      - main
+      - development.ii
+      - new-developmento
+      - new-developmento.old
   workflow_dispatch:
 
 permissions:
