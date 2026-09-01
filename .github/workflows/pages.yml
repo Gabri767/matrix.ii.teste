@@ -1,12 +1,9 @@
-name: Controlled Pages deployment
+name: Deploy GitHub Pages
 
 on:
   push:
     branches:
       - main
-      - development.ii
-      - new-developmento
-      - new-developmento.old
   workflow_dispatch:
 
 permissions:
@@ -15,202 +12,28 @@ permissions:
   id-token: write
 
 concurrency:
-  group: pages-${{ github.ref_name }}
-  cancel-in-progress: true
+  group: pages
+  cancel-in-progress: false
 
 jobs:
-  resolve:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
-    outputs:
-      environment: ${{ steps.map.outputs.environment }}
-      project_name: ${{ steps.map.outputs.project_name }}
-      project_path: ${{ steps.map.outputs.project_path }}
-      static_file: ${{ steps.map.outputs.static_file }}
-    steps:
-      - name: Map branch to controlled environment
-        id: map
-        shell: bash
-        run: |
-          case "${GITHUB_REF_NAME}" in
-            development.ii)
-              echo "environment=teste" >> "$GITHUB_OUTPUT"
-              echo "project_name=development-ii" >> "$GITHUB_OUTPUT"
-              echo "project_path=." >> "$GITHUB_OUTPUT"
-              echo "static_file=index.html" >> "$GITHUB_OUTPUT"
-              ;;
-            new-developmento.old)
-              echo "environment=desenvolvimento-antigo" >> "$GITHUB_OUTPUT"
-              echo "project_name=new-developmento-old" >> "$GITHUB_OUTPUT"
-              echo "project_path=." >> "$GITHUB_OUTPUT"
-              echo "static_file=index.html" >> "$GITHUB_OUTPUT"
-              ;;
-            new-developmento)
-              echo "environment=desenvolvimento" >> "$GITHUB_OUTPUT"
-              echo "project_name=new-developmento" >> "$GITHUB_OUTPUT"
-              echo "project_path=." >> "$GITHUB_OUTPUT"
-              echo "static_file=index.html" >> "$GITHUB_OUTPUT"
-              ;;
-            main)
-              echo "environment=github-pages" >> "$GITHUB_OUTPUT"
-              echo "project_name=matrix-ii" >> "$GITHUB_OUTPUT"
-              echo "project_path=." >> "$GITHUB_OUTPUT"
-              echo "static_file=index.html" >> "$GITHUB_OUTPUT"
-              ;;
-            *)
-              echo "Branch '${GITHUB_REF_NAME}' is not mapped to a controlled environment." >&2
-              exit 1
-              ;;
-          esac
 
-  build:
-    runs-on: ubuntu-latest
-    needs: resolve
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
-      - name: Prepare static project
-        run: |
-          mkdir -p _site
-
-          # Usa o index.html da raiz se existir
-          if [ -f "${{ needs.resolve.outputs.project_path }}/${{ needs.resolve.outputs.static_file }}" ]; then
-            cp "${{ needs.resolve.outputs.project_path }}/${{ needs.resolve.outputs.static_file }}" _site/index.html
-          else
-            # Fallback: gera uma página simples com os módulos do projeto
-            cat > _site/index.html << 'HTML'
-          <!DOCTYPE html>
-          <html lang="pt-BR">
-          <head>
-            <meta charset="UTF-8" />
-            <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-            <title>Matrix II - Projetos</title>
-            <style>
-              :root {
-                --bg: #0f172a;
-                --card: #1e293b;
-                --accent: #38bdf8;
-                --text: #e2e8f0;
-                --muted: #94a3b8;
-              }
-              * { box-sizing: border-box; margin: 0; padding: 0; }
-              body {
-                font-family: system-ui, -apple-system, sans-serif;
-                background: var(--bg);
-                color: var(--text);
-                min-height: 100vh;
-                padding: 2rem;
-              }
-              .container { max-width: 900px; margin: 0 auto; }
-              h1 {
-                font-size: 2rem;
-                margin-bottom: 0.5rem;
-                background: linear-gradient(90deg, var(--accent), #818cf8);
-                -webkit-background-clip: text;
-                -webkit-text-fill-color: transparent;
-              }
-              .subtitle { color: var(--muted); margin-bottom: 2rem; }
-              .grid {
-                display: grid;
-                gap: 1.25rem;
-                grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-              }
-              .card {
-                background: var(--card);
-                border: 1px solid #334155;
-                border-radius: 12px;
-                padding: 1.5rem;
-                transition: border-color 0.2s, transform 0.2s;
-              }
-              .card:hover {
-                border-color: var(--accent);
-                transform: translateY(-2px);
-              }
-              .card h2 { font-size: 1.15rem; margin-bottom: 0.5rem; color: var(--accent); }
-              .card p { color: var(--muted); font-size: 0.95rem; line-height: 1.5; }
-              .badge {
-                display: inline-block;
-                margin-top: 1rem;
-                font-size: 0.75rem;
-                padding: 0.25rem 0.6rem;
-                border-radius: 999px;
-                background: #0ea5e920;
-                color: var(--accent);
-              }
-              footer {
-                margin-top: 3rem;
-                text-align: center;
-                color: var(--muted);
-                font-size: 0.85rem;
-              }
-            </style>
-          </head>
-          <body>
-            <div class="container">
-              <h1>Matrix II</h1>
-              <p class="subtitle">Sistema modular — Empresas · Contabilidade · Relatórios</p>
-              <div class="grid">
-                <div class="card">
-                  <h2>Projeto 1 — Empresas</h2>
-                  <p>Cadastro e gestão de dados empresariais, filiais e parceiros.</p>
-                  <span class="badge">Node.js</span>
-                </div>
-                <div class="card">
-                  <h2>Projeto 2 — Contabilidade</h2>
-                  <p>Apuração contábil, lançamentos e balancete.</p>
-                  <span class="badge">Node.js</span>
-                </div>
-                <div class="card">
-                  <h2>Projeto 3 — Relatórios</h2>
-                  <p>Relatórios executivos e exportação de análises.</p>
-                  <span class="badge">Node.js</span>
-                </div>
-              </div>
-              <footer>
-                Deploy controlado via GitHub Pages · branch ${GITHUB_REF_NAME}
-              </footer>
-            </div>
-          </body>
-          </html>
-          HTML
-            # Substitui o placeholder da branch
-            sed -i "s/\${GITHUB_REF_NAME}/${GITHUB_REF_NAME}/g" _site/index.html
-          fi
-
-      - name: Include old matrix page when available
-        run: |
-          if [ -f "matrix.ii/index.old.html" ]; then
-            mkdir -p _site/matrix.ii
-            cp "matrix.ii/index.old.html" _site/matrix.ii/index.old.html
-          fi
-
-      - name: Write deployment summary
-        run: |
-          cat >> "$GITHUB_STEP_SUMMARY" << SUMMARY
-          ## Controlled Pages deployment
-
-          | Campo        | Valor |
-          |--------------|-------|
-          | Environment  | \`${{ needs.resolve.outputs.environment }}\` |
-          | Project      | \`${{ needs.resolve.outputs.project_name }}\` |
-          | Source       | \`${{ needs.resolve.outputs.project_path }}\` |
-          | Branch       | \`${{ github.ref_name }}\` |
-          SUMMARY
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
 
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v4
         with:
-          path: _site
+          path: .
 
-  deploy:
-    runs-on: ubuntu-latest
-    needs:
-      - resolve
-      - build
-    environment:
-      name: ${{ needs.resolve.outputs.environment }}
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
